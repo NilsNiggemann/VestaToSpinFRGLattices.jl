@@ -1,0 +1,7 @@
+name = "CifToSpinFRGLattice"
+uuid = "680434bc-4f64-4098-b23a-394725495aff"
+authors = ["Nils Niggemann <nils.niggemann@fu-berlin.de>"]
+version = "0.1.0"
+
+[deps]
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
