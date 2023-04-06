@@ -37,11 +37,7 @@ module CifToSpinFRGLattice
 
     fncFromString(s) = eval(Meta.parse(s))
 
-    function getSymmetries(symlist::Vector{String})
-        [
-            fncFromString(s) for s in symlist
-        ]
-    end
+    getSymmetries(symlist::Vector{String}) = fncFromString.(symlist)
 
     getSymmetries(filename::String) = filename |> readCifSymmetries |> modifySymmetries! |> getSymmetries
 
