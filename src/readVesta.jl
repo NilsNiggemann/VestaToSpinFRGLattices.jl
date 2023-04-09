@@ -91,3 +91,29 @@ function readVestaSymops(filename)
     matrices = [parseAsSMatrix(data[4:12]) for data in Info]
     SiteTransformation.(origins,matrices)
 end
+
+function isInUnitCell(pos_fractional::AbstractVector)
+    all(pos_fractional .>= 0) && all(pos_fractional .< 1)
+end
+
+"""Given the symmetry inequivalent sites, the symmetry operations and the lattice vectors return the positions of all sites in a single unit cell"""
+function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVector{<:AbstractSymop})
+    positions = SVector{3,Float64}[]
+    sites = 
+    for site in sites
+        for symop in symops
+            push!(positions, symop(site))
+        end
+    end
+    positions = unique(positions)
+    # positions = [pos for pos in positions if all(pos .>= 0) && all(pos .< 1)]
+    filter!(x->all(x .>= 0) && all(x .< 1),positions)
+    positions
+end
+
+function getUnitCell(filename)
+    sites = readVestaSites(filename)
+    symops = readVestaSymops(filename)
+    # avec,bvec,cvec = readLatticeVectors(filename)
+    getUnitCell(sites,symops)
+end
