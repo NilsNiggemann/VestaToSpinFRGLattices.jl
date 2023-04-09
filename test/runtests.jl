@@ -115,7 +115,7 @@ end
         SA[0.625000, 0.625000, 0.125000]
     ])
     Sites = Cif.getUnitCell("CentredPyrochlore.vesta") |> sort!
-    # @test length(UCSites) == length(Sites)
+    @test length(UCSites) == length(Sites)
     
     smallerArray, largerArray = length(UCSites) > length(Sites) ? (UCSites,Sites) : (Sites,UCSites)
 

@@ -92,23 +92,33 @@ function readVestaSymops(filename)
     SiteTransformation.(origins,matrices)
 end
 
+"""for a position in fractional coordinates return true if it is in the unit cell"""
 function isInUnitCell(pos_fractional::AbstractVector)
     all(pos_fractional .>= 0) && all(pos_fractional .< 1)
 end
 
-"""Given the symmetry inequivalent sites, the symmetry operations and the lattice vectors return the positions of all sites in a single unit cell"""
-function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVector{<:AbstractSymop})
-    positions = SVector{3,Float64}[]
-    sites = 
-    for site in sites
+"""Given the symmetry inequivalent sites, the symmetry operations and the lattice vectors return the positions of all sites in a single unit cell by generating new sites via symmetry transformations until no new sites are found."""
+function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVector{<:AbstractSymop},maxiter = 1000)
+    positions = copy(sites)
+
+    i = 0
+    for site in positions
+        #new sites that are found are appended to positions and then used for generation iteratively. This loop should terminate eventually, since the number of sites in a unit cell is finite.
         for symop in symops
-            push!(positions, symop(site))
+            r´ = symop(site)
+            if isInUnitCell(r´) && r´ ∉ positions
+                push!(positions, r´)
+            end
         end
+        i +=1
+        i >= maxiter && error("too many iterations")
     end
-    positions = unique(positions)
-    # positions = [pos for pos in positions if all(pos .>= 0) && all(pos .< 1)]
-    filter!(x->all(x .>= 0) && all(x .< 1),positions)
-    positions
+
+    unique!(positions)
+    filter!(isInUnitCell,positions)
+    sort!(positions)
+    
+    return positions
 end
 
 function getUnitCell(filename)
