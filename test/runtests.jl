@@ -1,5 +1,7 @@
-using CifToSpinFRGLattice,Test,LinearAlgebra,StaticArrays
-
+using Test,LinearAlgebra,StaticArrays
+using CifToSpinFRGLattice
+import CifToSpinFRGLattice as Cif
+##
 @testset "parseInequivSites" begin
     @test getInequivalentSites("SimpleCubic.cif") == [[0.0,0.0,0.0]]
 end
@@ -9,7 +11,7 @@ end
         "'   '-z, -x, y''"
         "'   '-z+1/4, -x-0.1, y*2''"
     ]
-    syms = CifToSpinFRGLattice.modifySymmetries!(symlist)
+    syms = Cif.modifySymmetries!(symlist)
     @test syms == [
         "r-> SA[-r[3],-r[1],r[2]]"
         "r-> SA[-r[3]+1/4,-r[1]-0.1,r[2]*2]"
@@ -31,7 +33,7 @@ end
     @test syms[end](r) == r´
 end
 ##
-@testset "convert lattice angles to unit vectors" begin
+@testset "convert lattice angles to unit vectors" failfast = true begin
     a = SA[1,0,0]
     b_(x) = LinearAlgebra.normalize(SA[1,x,0])
     c_(x,y) = LinearAlgebra.normalize(SA[1,x,y])
@@ -41,14 +43,30 @@ end
         b = b_(x)
         for y in range
             c = c_(x,y)
-            alpha,beta,gamma = CifToSpinFRGLattice.latticeparameters(a,b,c)
+            alpha,beta,gamma = Cif.latticeparameters(a,b,c)
 
-            a2,b2,c2 =  CifToSpinFRGLattice.getUnitVectors(alpha,beta,gamma)
-            alpha2,beta2,gamma2 = CifToSpinFRGLattice.latticeparameters(a2,b2,c2)
+            a2,b2,c2 =  Cif.getUnitVectors(alpha,beta,gamma)
+            alpha2,beta2,gamma2 = Cif.latticeparameters(a2,b2,c2)
 
             @test alpha ≈ alpha2
             @test beta ≈ beta2
             @test gamma ≈ gamma2
         end
     end
+end
+##
+@testset "Vesta readLatticevecs"  begin
+    
+    a,b,c = Cif.readLatticeVectors("SimpleCubic.vesta")
+    @test a ≈ SA[1,0,0]
+    @test b ≈ SA[0,1,0]
+    @test c ≈ SA[0,0,1]
+end
+##
+@testset "vesta readSites" begin
+    sites = Cif.readVestaSites("test.vesta")
+    @test sites == [
+        SA[0.,0.,0.],
+        SA[0.25,0.25,0.25],
+    ]
 end
