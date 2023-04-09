@@ -123,3 +123,21 @@ end
 
     @test isempty(uniqueSites)
 end
+##
+using SpinFRGLattices
+@testset "transforms" begin
+    
+    syms = Cif.readVestaSymops("SimpleCubic.vesta")
+    Basis = Cif.getBasis("SimpleCubic.vesta")
+
+    T1 = Cif.gettransform(syms[1],Basis)
+    T2 = Cif.gettransform(syms[2],Basis)
+
+    R1 = Rvec(1,2,3,1)
+    R2 = Rvec(-2,2,3,1)
+    @test T1(R1) == R1
+    @test T1(R2) == R2
+
+    @test T2(R1) == Rvec(-1,-2,3,1)
+    @test T2(R2) == Rvec(2,-2,3,1)
+end

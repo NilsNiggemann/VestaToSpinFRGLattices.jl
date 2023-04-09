@@ -54,21 +54,19 @@ end
 
 abstract type AbstractSymop end
 
-struct SiteTransformation2{T<:Real} <: AbstractSymop
+struct SiteTransformation{T<:Real} <: AbstractSymop
     origin::SVector{3,T}
     matrix::SMatrix{3,3,T,9}
     WMatrix::SMatrix{4,4,T,16}
 end
 
-SiteTransformation2(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real = SiteTransformation2(origin,matrix,SiteTransformationMatrix(origin,matrix)) 
-
-SiteTransformation = SiteTransformation2
+SiteTransformation(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real = SiteTransformation(origin,matrix,SiteTransformationMatrix(origin,matrix)) 
 
 function SiteTransformationMatrix(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real
     convert(SMatrix{4,4,T,16},[matrix origin; 0 0 0 1])
 end
 
-function (S::SiteTransformation2)(vec::AbstractVector{T}) where {T<:Real}
+function (S::SiteTransformation)(vec::AbstractVector{T}) where {T<:Real}
     x,y,z = vec
     x,y,z,_ = S.WMatrix * SA[x,y,z,one(x)]
     return SA[x,y,z]
@@ -76,7 +74,7 @@ end
 
 parseAsSMatrix(v::AbstractVector{<:AbstractString}) = SMatrix{3,3,Float64,9}([parse(Float64,s) for s in v])'
 
-function Base.show(io::IO, x::SiteTransformation2{T}) where T
+function Base.show(io::IO, x::SiteTransformation{T}) where T
     println(io,"3 dim SiteTransformation{T}")
     Base.print_matrix(io,x.WMatrix)
 end
@@ -153,4 +151,12 @@ function getMinDistance(sites::AbstractVector{<:AbstractVector})
         end
     end
     return minDist
+end
+
+"""Returns function acting on Rvec site by transforming and applying cartesian space function """
+function gettransform(T::SiteTransformation,Basis::SpinFRGLattices.Basis_Struct)
+    @inline transform(r::AbstractArray) = T(r)
+    RV(x) = SpinFRGLattices.getRvec(x,Basis)
+    @inline transform(R::Rvec) = getCartesian(R,Basis) |> T |> RV
+    return transform
 end
