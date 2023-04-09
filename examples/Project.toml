@@ -1,0 +1,4 @@
+[deps]
+FRGLatticePlotting = "0e1bda0b-f6c0-498b-8522-61e6152bcfb4"
+Plotly = "58dd65bb-95f3-509e-9936-c39a10fdeae7"
+SpinFRGLattices = "053fb7f8-31b7-4f68-aef8-4452b415dd8c"

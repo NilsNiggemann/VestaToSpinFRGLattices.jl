@@ -114,9 +114,9 @@ end
         SA[0.875000, 0.375000, 0.375000],
         SA[0.625000, 0.625000, 0.125000]
     ])
-    Sites = Cif.getUnitCell("CentredPyrochlore.vesta") |> sort!
+    Sites = Cif.getUnitCell("CentredPyrochlore.vesta").positions |> sort!
     @test length(UCSites) == length(Sites)
-    
+
     smallerArray, largerArray = length(UCSites) > length(Sites) ? (UCSites,Sites) : (Sites,UCSites)
 
     uniqueSites = [s for (i,s) in enumerate(smallerArray) if s ∉ largerArray]

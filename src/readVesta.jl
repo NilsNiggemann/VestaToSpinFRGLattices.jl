@@ -1,5 +1,5 @@
-using LinearAlgebra
-
+using LinearAlgebra,SpinFRGLattices
+using LinearAlgebra:norm
 function containsData(line::String,::VestaFile)
     line = replace(line," " => "")
     return !isempty(line) && isdigit(first(line))
@@ -100,30 +100,57 @@ end
 """Given the symmetry inequivalent sites, the symmetry operations and the lattice vectors return the positions of all sites in a single unit cell by generating new sites via symmetry transformations until no new sites are found."""
 function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVector{<:AbstractSymop},maxiter = 1000)
     positions = copy(sites)
-
+    siteTypes = collect(eachindex(sites))
     i = 0
-    for site in positions
+    for (x,site) in zip(siteTypes,positions)
         #new sites that are found are appended to positions and then used for generation iteratively. This loop should terminate eventually, since the number of sites in a unit cell is finite.
+        #x is the type of the site, which does not change under symmetry transformations since, the site types are symmetry inequivalent by definition.
         for symop in symops
             r´ = symop(site)
             if isInUnitCell(r´) && r´ ∉ positions
                 push!(positions, r´)
+                push!(siteTypes, x)
             end
         end
         i +=1
         i >= maxiter && error("too many iterations")
     end
+    perm = sortperm(positions)
 
-    unique!(positions)
-    filter!(isInUnitCell,positions)
-    sort!(positions)
-    
-    return positions
+    positions = positions[perm]
+    siteTypes = siteTypes[perm]
+
+    return (;positions,siteTypes)
 end
 
 function getUnitCell(filename)
     sites = readVestaSites(filename)
     symops = readVestaSymops(filename)
-    # avec,bvec,cvec = readLatticeVectors(filename)
     getUnitCell(sites,symops)
+end
+
+function getBasis(filename)
+    a1,a2,a3 = readLatticeVectors(filename)
+    T = inv([a1 a2 a3])
+
+    b,SiteType = getUnitCell(filename)
+    
+    b = [T * r for r in b]
+
+    NUnique = maximum(SiteType)
+    NNdist = min(getMinDistance(b),norm(a1),norm(a2),norm(a3))
+
+    return Basis_Struct_3D(;a1,a2,a3,b,NUnique,SiteType,NNdist)
+    # return (;a1,a2,a3,b,NUnique,SiteType,NNdist)
+end
+
+"""given a vector of sites return the minimum distance between any two sites"""
+function getMinDistance(sites::AbstractVector{<:AbstractVector})
+    minDist = Inf
+    for i in eachindex(sites)
+        for j in i+1:length(sites)
+            minDist = min(minDist, norm(sites[i] - sites[j]))
+        end
+    end
+    return minDist
 end
