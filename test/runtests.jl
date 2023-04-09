@@ -1,4 +1,4 @@
-using CifToSpinFRGLattice,Test
+using CifToSpinFRGLattice,Test,LinearAlgebra,StaticArrays
 
 @testset "parseInequivSites" begin
     @test getInequivalentSites("SimpleCubic.cif") == [[0.0,0.0,0.0]]
@@ -29,4 +29,26 @@ end
 
     @test syms[1](r) == r # identity
     @test syms[end](r) == r´
+end
+##
+@testset "convert lattice angles to unit vectors" begin
+    a = SA[1,0,0]
+    b_(x) = LinearAlgebra.normalize(SA[1,x,0])
+    c_(x,y) = LinearAlgebra.normalize(SA[1,x,y])
+
+    range = LinRange(-2,2,30)
+    for x in range
+        b = b_(x)
+        for y in range
+            c = c_(x,y)
+            alpha,beta,gamma = CifToSpinFRGLattice.latticeparameters(a,b,c)
+
+            a2,b2,c2 =  CifToSpinFRGLattice.getUnitVectors(alpha,beta,gamma)
+            alpha2,beta2,gamma2 = CifToSpinFRGLattice.latticeparameters(a2,b2,c2)
+
+            @test alpha ≈ alpha2
+            @test beta ≈ beta2
+            @test gamma ≈ gamma2
+        end
+    end
 end

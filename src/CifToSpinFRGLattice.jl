@@ -2,6 +2,14 @@ module CifToSpinFRGLattice
     
     using StaticArrays
 
+    """given a line from a file returns true if it contains any word. If it contains an empty space or a selection of numbers return false"""
+    function containsWord(line::String)
+        if occursin(" ",line) || occursin("[0-9]",line)
+            return false
+        end
+        return true
+    end
+
     """reading cif file returns information under key as a vector of strings"""
     function readCifInfo(filename::String,key::String)
         positions = String[]
@@ -9,7 +17,8 @@ module CifToSpinFRGLattice
             for line in eachline(file)
                 if occursin(key,line)
                     for line in eachline(file)
-                        if occursin("_",line) || line == ""
+                        # if occursin("_",line) || line == ""
+                        if containsWord(line)
                             break
                         end
                         push!(positions,line)
@@ -26,9 +35,14 @@ module CifToSpinFRGLattice
     """reading cif file returns positions of symmetry inequivalent sites"""
     readCifPositions(filename::String) = readCifInfo(filename,"_atom_site_type_symbol")
 
+    function getFields(line::String)
+        fields = split(line," ")
+        filter!(!=(""),fields)
+        return fields
+    end
+    
     function getInequivalentSites(poslist::Vector{String})
-        spl = split.(poslist," ")
-        filter!.(!=(""),spl)
+        spl = getFields.(poslist)
         return [SVector{3,Float64}([parse(Float64,s) for s in p[3:5]]) for p in spl]
     end
     getInequivalentSites(filename::String) = filename |> readCifPositions |> getInequivalentSites
@@ -57,5 +71,6 @@ module CifToSpinFRGLattice
 
     getSymmetries(filename::String) = filename |> readCifSymmetries |> modifySymmetries! |> getSymmetries
 
+    include("readVesta.jl")
     export getInequivalentSites,getSymmetries
 end # module SpinLatticeFromCif
