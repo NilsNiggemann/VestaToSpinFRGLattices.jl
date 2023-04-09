@@ -51,3 +51,43 @@ function readVestaSites(filename)
     Info = getFields.(Info)
     pos = [parseAsSVector(data[5:7]) for data in Info]
 end
+
+abstract type AbstractSymop end
+
+struct SiteTransformation2{T<:Real} <: AbstractSymop
+    origin::SVector{3,T}
+    matrix::SMatrix{3,3,T,9}
+    WMatrix::SMatrix{4,4,T,16}
+end
+
+SiteTransformation2(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real = SiteTransformation2(origin,matrix,SiteTransformationMatrix(origin,matrix)) 
+
+SiteTransformation = SiteTransformation2
+
+function SiteTransformationMatrix(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real
+    convert(SMatrix{4,4,T,16},[matrix origin; 0 0 0 1])
+end
+
+function (S::SiteTransformation2)(vec::AbstractVector{T}) where {T<:Real}
+    x,y,z = vec
+    x,y,z,_ = S.WMatrix * SA[x,y,z,one(x)]
+    return SA[x,y,z]
+end
+
+parseAsSMatrix(v::AbstractVector{<:AbstractString}) = SMatrix{3,3,Float64,9}([parse(Float64,s) for s in v])'
+
+function Base.show(io::IO, x::SiteTransformation2{T}) where T
+    println(io,"3 dim SiteTransformation{T}")
+    Base.print_matrix(io,x.WMatrix)
+end
+Base.show(io::IO, ::MIME"text/plain", x::AbstractSymop) = show(io,x)
+
+
+"""read the symmetry operations from a vesta file"""
+function readVestaSymops(filename)
+    Info = readFileInfo(filename,"SYMOP",VestaFile())
+    Info = getFields.(Info)
+    origins = [parseAsSVector(data[1:3]) for data in Info]
+    matrices = [parseAsSMatrix(data[4:12]) for data in Info]
+    SiteTransformation.(origins,matrices)
+end

@@ -70,3 +70,18 @@ end
         SA[0.25,0.25,0.25],
     ]
 end
+
+##
+@testset "reading Vesta Symmetries" begin
+    syms = getSymmetries("SimpleCubic.cif")
+    syms2 = Cif.readVestaSymops("SimpleCubic.vesta")
+    @test length(syms) == length(syms2)
+
+    x,y,z = r = SA[10.5,11.2,-10.4]
+    for (s1,s2) in zip(syms,syms2)
+        @test s1(r) == s2(r)
+
+    end
+
+end
+##
