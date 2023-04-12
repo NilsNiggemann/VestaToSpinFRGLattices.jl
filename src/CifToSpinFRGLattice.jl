@@ -29,7 +29,20 @@ module CifToSpinFRGLattice
         return positions
     end
 
-    getSymmetriesForRefSite(refSite,syms) = [s for s in syms if s(refSite) == refSite]
+    """returns whether is symmetry leaves reference site invariant"""
+    isRefSymmetry(sym,refSite) = sym(refSite) == refSite
+
+    """returns whether a symmetry leaves any reference site invariant"""
+    function isAnyRefSymmetry(sym,refSites::AbstractArray)
+        for refSite in refSites
+            if isRefSymmetry(sym,refSite)
+                return true
+            end
+        end
+        return false
+    end
+
+    getSymmetriesForRefSite(refSite,syms) = [s for s in syms if isRefSymmetry(refSite,s)]
 
     """reading cif file returns positions of symmetry inequivalent sites"""
     readCifPositions(filename::String) = readFileInfo(filename,"_atom_site_type_symbol",CifFile())

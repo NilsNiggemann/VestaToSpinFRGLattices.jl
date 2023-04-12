@@ -141,3 +141,9 @@ using SpinFRGLattices
     @test T2(R1) == Rvec(-1,-2,3,1)
     @test T2(R2) == Rvec(2,-2,3,1)
 end
+##
+a = Cif.generateSystem(12,"SimpleCubic.vesta",test = true)
+##
+a = Cif.generateSystem(6,"CentredPyrochlore.vesta",test = true)
+##
+a = Cif.generateSystem(7,"CentredPyrochlore.vesta",test = true)

@@ -52,7 +52,7 @@ function readVestaSites(filename)
     pos = [parseAsSVector(data[5:7]) for data in Info]
 end
 
-abstract type AbstractSymop end
+abstract type AbstractSymop <: Function end
 
 struct SiteTransformation{T<:Real} <: AbstractSymop
     origin::SVector{3,T}
@@ -75,10 +75,10 @@ end
 parseAsSMatrix(v::AbstractVector{<:AbstractString}) = SMatrix{3,3,Float64,9}([parse(Float64,s) for s in v])'
 
 function Base.show(io::IO, x::SiteTransformation{T}) where T
-    println(io,"3 dim SiteTransformation{T}")
+    println(io,"3 dim SiteTransformation{",T,"}")
     Base.print_matrix(io,x.WMatrix)
 end
-Base.show(io::IO, ::MIME"text/plain", x::AbstractSymop) = show(io,x)
+Base.show(io::IO, ::MIME"text/plain", x::SiteTransformation) = show(io,x)
 
 
 """read the symmetry operations from a vesta file"""
@@ -121,25 +121,27 @@ function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVec
     return (;positions,siteTypes)
 end
 
-function getUnitCell(filename)
+function getUnitCell(filename::AbstractString)
     sites = readVestaSites(filename)
     symops = readVestaSymops(filename)
     getUnitCell(sites,symops)
 end
 
-function getBasis(filename)
+"""given a filename return the Basis structure"""
+function getBasis(filename::AbstractString)
     a1,a2,a3 = readLatticeVectors(filename)
     T = inv([a1 a2 a3])
 
     b,SiteType = getUnitCell(filename)
     
     b = [T * r for r in b]
-
+    
     NUnique = maximum(SiteType)
     NNdist = min(getMinDistance(b),norm(a1),norm(a2),norm(a3))
-
-    return Basis_Struct_3D(;a1,a2,a3,b,NUnique,SiteType,NNdist)
-    # return (;a1,a2,a3,b,NUnique,SiteType,NNdist)
+    refSites_r = [T * r for r in readVestaSites(filename)]
+    refSitePos = [findfirst(==(r), b) for r in refSites_r]
+    refSites = Rvec.(0,0,0,refSitePos)
+    return Basis_Struct_3D(;a1,a2,a3,b,NUnique,SiteType,NNdist,refSites)
 end
 
 """given a vector of sites return the minimum distance between any two sites"""
@@ -160,3 +162,63 @@ function gettransform(T::SiteTransformation,Basis::SpinFRGLattices.Basis_Struct)
     @inline transform(R::Rvec) = getCartesian(R,Basis) |> T |> RV
     return transform
 end
+
+"""return the name of a file without the extension"""
+function getName(filename)
+    splitext(basename(filename))[1]
+end
+
+struct SiteTransformationRvec{T,B<:Basis_Struct} <: AbstractSymop
+    T::SiteTransformation{T}
+    Basis::B
+end
+
+using SpinFRGLattices:getRvec
+(S::SiteTransformationRvec)(r::AbstractArray) = S.T(r)
+(S::SiteTransformationRvec)(r::Rvec) = getRvec(S.T(getCartesian(r,S.Basis)),S.Basis)
+
+Base.show(io::IO, x::SiteTransformationRvec) = show(io,x.T)
+
+Base.show(io::IO, ::MIME"text/plain", x::SiteTransformationRvec) = show(io,x)
+
+function splitSyms(syms::AbstractVector{T},refSites::AbstractArray) where T <: AbstractSymop
+    
+    nonRefSyms = T[]
+    refSyms = [T[] for _ in eachindex(refSites)]
+
+    for sym in syms
+        isRefSym = false
+        for (i,r) in enumerate(refSites)
+            if sym(r) == r
+                isRefSym = true
+                push!(refSyms[i],sym)
+            end
+        end
+        isRefSym || push!(nonRefSyms,sym)
+    end
+    return (;refSyms,nonRefSyms)
+end
+
+function getSymmetriesVesta(filename::AbstractString, Basis = getBasis(filename)::Basis_Struct)
+    refSites = getCartesian.(Basis.refSites,Ref(Basis))
+    
+    syms = [SiteTransformationRvec(sym,Basis) for sym in readVestaSymops(filename)]
+    return splitSyms(syms,refSites)
+end
+
+
+"""does not work for for lattices with more than one inequiv site yet, since the ref Symmetries need to be considered for each inequiv ref site individually"""
+function generateSystem(NLen,filename;kwargs...)
+    Name = getName(filename)
+    Basis = getBasis(filename)
+    refSites = getCartesian.(Basis.refSites,Ref(Basis))
+
+    (;refSyms,nonRefSyms) = getSymmetriesVesta(filename,Basis)
+    
+    System = getLatticeGeometry(NLen,Name,Basis,nonRefSyms,refSyms;kwargs...)
+end
+
+isInUnitCell(R::Rvec_3D) = R.n1 == R.n2 == R.n3 == 0
+
+isidentity(s::SiteTransformation) = s.WMatrix == I
+isidentity(s::SiteTransformationRvec) = s.T.WMatrix == I
