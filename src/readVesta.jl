@@ -48,9 +48,14 @@ end
 """reads position of symmetry inequivalent sites in fractional coordinates"""
 function readVestaSites(filename)
     Info = readFileInfo(filename,"STRUC",VestaFile())[1:2:end-1] # skip standard uncertainty lines and line of trailing zeros
-    Info = getFields.(Info)
-    pos = [parseAsSVector(data[5:7]) for data in Info]
+    function parseSites(s)
+        number,atom,label,occ,x,y,z,_ = getFields(s)
+        position = parse.(Float64,SA[x,y,z])
+        return (;atom,label,position)
+    end
+    return parseSites.(Info)
 end
+
 
 abstract type AbstractSymop <: Function end
 
@@ -77,6 +82,7 @@ function Base.show(io::IO, x::SiteTransformation{T}) where T
 end
 Base.show(io::IO, ::MIME"text/plain", x::SiteTransformation) = show(io,x)
 
+ispuretranslation(S::SiteTransformation) = abs(det(getRotation(S))) == 0
 
 """read the symmetry operations from a vesta file"""
 function readVestaSymops(filename)
@@ -84,7 +90,9 @@ function readVestaSymops(filename)
     Info = getFields.(Info)
     origins = [parseAsSVector(data[1:3]) for data in Info]
     matrices = [parseAsSMatrix(data[4:12]) for data in Info]
-    SiteTransformation.(origins,matrices)
+    Syms = SiteTransformation.(origins,matrices)
+    filter!(!ispuretranslation,Syms)
+    return Syms
 end
 
 """for a position in fractional coordinates return true if it is in the unit cell"""
@@ -119,7 +127,7 @@ function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVec
 end
 
 function getUnitCell(filename::AbstractString)
-    sites = readVestaSites(filename)
+    sites = getproperty.(readVestaSites(filename),:position)
     symops = readVestaSymops(filename)
     getUnitCell(sites,symops)
 end
@@ -135,7 +143,7 @@ function getBasis(filename::AbstractString)
     
     NUnique = maximum(SiteType)
     NNdist = min(getMinDistance(b),norm(a1),norm(a2),norm(a3))
-    refSites_r = [T * r for r in readVestaSites(filename)]
+    refSites_r = [T * r.position for r in readVestaSites(filename)]
     refSitePos = [findfirst(==(r), b) for r in refSites_r]
     refSites = Rvec.(0,0,0,refSitePos)
     return Basis_Struct_3D(;a1,a2,a3,b,NUnique,SiteType,NNdist,refSites)

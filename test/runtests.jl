@@ -67,7 +67,7 @@ end
 ##
 @testset "vesta readSites" begin
     sites = Cif.readVestaSites("test.vesta")
-    @test sites == [
+    @test getproperty.(sites,:position) == [
         SA[0.,0.,0.],
         SA[0.25,0.25,0.25],
     ]
@@ -143,7 +143,7 @@ using SpinFRGLattices
     @test T2(R2) == Rvec(2,-2,3,1)
 end
 ##
-a = Cif.generateSystem(6,"SimpleCubic.vesta",test = true)
+a = Cif.generateSystem(12,"SimpleCubic.vesta",test = true)
 ##
 @testset "Read Cubic" begin
     b = SimpleCubic.getCubic(12)
