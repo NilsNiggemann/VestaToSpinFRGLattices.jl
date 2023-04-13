@@ -153,3 +153,9 @@ end
 a = Cif.generateSystem(6,"CentredPyrochlore.vesta",test = true)
 ##
 a = Cif.generateSystem(7,"CentredPyrochlore.vesta",test = true)
+##
+@time a = Cif.generateSystem(20,"CentredPyrochlore.vesta")
+##
+@profview a = Cif.generateSystem(18,"SimpleCubic.vesta")
+##
+@time a = SimpleCubic.getCubic(18)
