@@ -1,5 +1,6 @@
 using Test,LinearAlgebra,StaticArrays
 using CifToSpinFRGLattice
+
 import CifToSpinFRGLattice as Cif
 ##
 @testset "parseInequivSites" begin

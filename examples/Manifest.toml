@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0-rc1"
+julia_version = "1.9.0-rc2"
 manifest_format = "2.0"
-project_hash = "87ffe926db85cbac265fea51d284e34a33de80a9"
+project_hash = "150849b363b2a140bc50d87c9b817e24ceb4f1fe"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -53,6 +53,12 @@ deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jl
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
+
+[[deps.CifToSpinFRGLattice]]
+deps = ["LinearAlgebra", "SpinFRGLattices", "StaticArrays"]
+path = ".."
+uuid = "680434bc-4f64-4098-b23a-394725495aff"
+version = "0.1.0"
 
 [[deps.ColorSchemes]]
 deps = ["ColorTypes", "ColorVectorSpace", "Colors", "FixedPointNumbers", "Random", "SnoopPrecompile"]
@@ -158,10 +164,10 @@ uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
 version = "4.4.2+2"
 
 [[deps.FRGLatticePlotting]]
-deps = ["LaTeXStrings", "Parameters", "Plots", "SpinFRGLattices", "StaticArrays"]
-git-tree-sha1 = "068352a5b3dfebb9f29dd8cebf0c088b7b3dddbb"
+deps = ["LaTeXStrings", "Parameters", "Plotly", "Plots", "SpinFRGLattices", "StaticArrays"]
+path = "C:\\Users\\wanta\\.julia\\dev\\FRGLatticePlotting"
 uuid = "0e1bda0b-f6c0-498b-8522-61e6152bcfb4"
-version = "2.0.1"
+version = "2.0.2"
 
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
@@ -749,7 +755,7 @@ version = "2.2.0"
 
 [[deps.SpinFRGLattices]]
 deps = ["StaticArrays", "StructArrays", "Test"]
-git-tree-sha1 = "5d7c8f9144e9e3a531f89186829cec948a57672e"
+path = "../../../SpinFRGLattices.jl"
 uuid = "053fb7f8-31b7-4f68-aef8-4452b415dd8c"
 version = "0.4.2"
 
