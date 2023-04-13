@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0-rc2"
+julia_version = "1.9.0-rc1"
 manifest_format = "2.0"
 project_hash = "150849b363b2a140bc50d87c9b817e24ceb4f1fe"
 
@@ -165,7 +165,7 @@ version = "4.4.2+2"
 
 [[deps.FRGLatticePlotting]]
 deps = ["LaTeXStrings", "Parameters", "Plotly", "Plots", "SpinFRGLattices", "StaticArrays"]
-path = "C:\\Users\\wanta\\.julia\\dev\\FRGLatticePlotting"
+path = "../../../FRGLatticePlotting.jl"
 uuid = "0e1bda0b-f6c0-498b-8522-61e6152bcfb4"
 version = "2.0.2"
 

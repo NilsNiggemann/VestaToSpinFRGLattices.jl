@@ -1,5 +1,6 @@
-using Test,LinearAlgebra,StaticArrays
 using CifToSpinFRGLattice
+
+using Test,LinearAlgebra,StaticArrays
 
 import CifToSpinFRGLattice as Cif
 ##
@@ -25,13 +26,13 @@ end
 
 @testset "reading Symmetries" begin
     syms = getSymmetries("SimpleCubic.cif")
-    @test length(syms) == 12
+    @test length(syms) == 48
     
     x,y,z = r = [10.5,11.2,-10.4]
     r´ = [-y, -z, x]
 
     @test syms[1](r) == r # identity
-    @test syms[end](r) == r´
+    @test syms[23](r) == r´
 end
 ##
 @testset "convert lattice angles to unit vectors" failfast = true begin
@@ -132,18 +133,22 @@ using SpinFRGLattices
     Basis = Cif.getBasis("SimpleCubic.vesta")
 
     T1 = Cif.gettransform(syms[1],Basis)
-    T2 = Cif.gettransform(syms[2],Basis)
+    T2 = Cif.gettransform(syms[3],Basis)
 
     R1 = Rvec(1,2,3,1)
     R2 = Rvec(-2,2,3,1)
     @test T1(R1) == R1
     @test T1(R2) == R2
-
     @test T2(R1) == Rvec(-1,-2,3,1)
     @test T2(R2) == Rvec(2,-2,3,1)
 end
 ##
-a = Cif.generateSystem(12,"SimpleCubic.vesta",test = true)
+a = Cif.generateSystem(6,"SimpleCubic.vesta",test = true)
+##
+@testset "Read Cubic" begin
+    b = SimpleCubic.getCubic(12)
+    @test length(a.PairList) == length(b.PairList)
+end
 ##
 a = Cif.generateSystem(6,"CentredPyrochlore.vesta",test = true)
 ##

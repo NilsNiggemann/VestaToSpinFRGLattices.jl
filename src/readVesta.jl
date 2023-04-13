@@ -2,7 +2,7 @@ using LinearAlgebra,SpinFRGLattices
 using LinearAlgebra:norm
 function containsData(line::String,::VestaFile)
     line = replace(line," " => "")
-    return !isempty(line) && isdigit(first(line))
+    return !isempty(line) && isdigit(first(line)) || first(line) ∈ ('-','+')
 end
 
 """read a vesta file and return the angles and lengths of the lattice vectors under CELLP"""
@@ -55,16 +55,13 @@ end
 abstract type AbstractSymop <: Function end
 
 struct SiteTransformation{T<:Real} <: AbstractSymop
-    origin::SVector{3,T}
-    matrix::SMatrix{3,3,T,9}
     WMatrix::SMatrix{4,4,T,16}
 end
 
-SiteTransformation(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real = SiteTransformation(origin,matrix,SiteTransformationMatrix(origin,matrix)) 
+getOrigin(S::SiteTransformation) = S.WMatrix[1:3,4]
+getRotation(S::SiteTransformation) = S.WMatrix[1:3,1:3]
 
-function SiteTransformationMatrix(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real
-    convert(SMatrix{4,4,T,16},[matrix origin; 0 0 0 1])
-end
+SiteTransformation(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real = SiteTransformation(convert(SMatrix{4,4,T,16},[matrix origin; 0 0 0 1])) 
 
 function (S::SiteTransformation)(vec::AbstractVector{T}) where {T<:Real}
     x,y,z = vec
@@ -177,9 +174,13 @@ using SpinFRGLattices:getRvec
 (S::SiteTransformationRvec)(r::AbstractArray) = S.T(r)
 (S::SiteTransformationRvec)(r::Rvec) = getRvec(S.T(getCartesian(r,S.Basis)),S.Basis)
 
-Base.show(io::IO, x::SiteTransformationRvec) = show(io,x.T)
+function Base.show(io::IO, x::SiteTransformationRvec{T,B}) where {T,B}
+    show(io,B)
+    print(io," ")
+    show(io,x.T)
+end
 
-Base.show(io::IO, ::MIME"text/plain", x::SiteTransformationRvec) = show(io,x)
+Base.show(io::IO, ::MIME"text/plain", x::SiteTransformationRvec{T,B}) where {T,B} = show(io,x)
 
 function splitSyms(syms::AbstractVector{T},refSites::AbstractArray) where T <: AbstractSymop
     
@@ -206,16 +207,46 @@ function getSymmetriesVesta(filename::AbstractString, Basis = getBasis(filename)
     return splitSyms(syms,refSites)
 end
 
+function reduceToInequivSites(NCell,nonRefSyms)
+    InequivSites = Rvec_3D[]
+
+    translate_back_to_UC(R::Rvec_3D) = Rvec(0,0,0,R.b)
+
+    for b in 1:NCell
+        R = Rvec(0,0,0,b)
+        allRsymmetric = [translate_back_to_UC(sym(R)) for sym in nonRefSyms]
+
+        if isempty(allRsymmetric ∩ InequivSites)
+            push!(InequivSites,R)
+        end
+    end
+
+    return InequivSites
+end
+
+import Base.*
+*(S::SiteTransformation,S2::SiteTransformation) = SiteTransformation(S.WMatrix*S2.WMatrix)
+*(S::SiteTransformationRvec,S2::SiteTransformationRvec) = SiteTransformationRvec(S.T*S2.T,S.Basis)
+
+function readBondsVesta(filename::AbstractString)
+    data = readFileInfo(filename,"SBOND",VestaFile())[begin:end-1]
+    spl = getFields.(data)
+    function parseline(s)
+        _,site1,site2,minDistStr,maxDistStr,_ = s
+        minDist = parse(Float64,minDistStr)
+        maxDist = parse(Float64,maxDistStr)
+        return (;site1,site2,minDist,maxDist)
+    end
+    bonds = parseline.(spl)
+end
 
 """does not work for for lattices with more than one inequiv site yet, since the ref Symmetries need to be considered for each inequiv ref site individually"""
 function generateSystem(NLen,filename;kwargs...)
     Name = getName(filename)
     Basis = getBasis(filename)
-    refSites = getCartesian.(Basis.refSites,Ref(Basis))
-
     (;refSyms,nonRefSyms) = getSymmetriesVesta(filename,Basis)
-    
     System = getLatticeGeometry(NLen,Name,Basis,nonRefSyms,refSyms;kwargs...)
+    return System
 end
 
 isInUnitCell(R::Rvec_3D) = R.n1 == R.n2 == R.n3 == 0
