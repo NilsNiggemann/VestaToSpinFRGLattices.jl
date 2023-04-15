@@ -97,11 +97,19 @@ end
 
 """for a position in fractional coordinates return true if it is in the unit cell"""
 function isInUnitCell(pos_fractional::AbstractVector)
-    all(pos_fractional .>= 0) && all(pos_fractional .< 1)
+    all(pos_fractional .>= -0) && all(pos_fractional .< 1)
+end
+
+translate_back_to_UC(r::AbstractVector) = r .- floor.(r)
+translate_back_to_UC(R::Rvec_3D) = Rvec(0,0,0,R.b)
+
+"""given a vector and a vector of vectors return if the vector is approximately equal to one of the vectors in the vector of vectors"""
+function approxin(r::AbstractVector,rs::AbstractVector{<:AbstractVector})
+    any(norm(r - rx) < 1e-9 for rx in rs)
 end
 
 """Given the symmetry inequivalent sites, the symmetry operations and the lattice vectors return the positions of all sites in a single unit cell by generating new sites via symmetry transformations until no new sites are found."""
-function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVector{<:AbstractSymop},maxiter = 1000)
+function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVector{<:AbstractSymop},maxiter = 100)
     positions = copy(sites)
     siteTypes = collect(eachindex(sites))
     i = 0
@@ -109,8 +117,8 @@ function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVec
         #new sites that are found are appended to positions and then used for generation iteratively. This loop should terminate eventually, since the number of sites in a unit cell is finite.
         #x is the type of the site, which does not change under symmetry transformations since, the site types are symmetry inequivalent by definition.
         for symop in symops
-            r´ = symop(site)
-            if isInUnitCell(r´) && r´ ∉ positions
+            r´ = symop(site) |> translate_back_to_UC
+            if !approxin(r´,positions)
                 push!(positions, r´)
                 push!(siteTypes, x)
             end
@@ -131,15 +139,13 @@ function getUnitCell(filename::AbstractString)
     symops = readVestaSymops(filename)
     getUnitCell(sites,symops)
 end
-
 """given a filename return the Basis structure"""
 function getBasis(filename::AbstractString)
     a1,a2,a3 = readLatticeVectors(filename)
-    T = inv([a1 a2 a3])
-
+    T = [a1 a2 a3]
     b,SiteType = getUnitCell(filename)
     
-    b = [T * r for r in b]
+    b = [T*r for r in b]
     
     NUnique = maximum(SiteType)
     NNdist = min(getMinDistance(b),norm(a1),norm(a2),norm(a3))
@@ -215,10 +221,10 @@ function getSymmetriesVesta(filename::AbstractString, Basis = getBasis(filename)
     return splitSyms(syms,refSites)
 end
 
+
 function reduceToInequivSites(NCell,nonRefSyms)
     InequivSites = Rvec_3D[]
 
-    translate_back_to_UC(R::Rvec_3D) = Rvec(0,0,0,R.b)
 
     for b in 1:NCell
         R = Rvec(0,0,0,b)
@@ -241,9 +247,11 @@ function readBondsVesta(filename::AbstractString)
     spl = getFields.(data)
     function parseline(s)
         _,site1,site2,minDistStr,maxDistStr,_ = s
+        r,g,b = parse.(Int,s[end-2:end])
+        colorRGB = (r,g,b)
         minDist = parse(Float64,minDistStr)
         maxDist = parse(Float64,maxDistStr)
-        return (;site1,site2,minDist,maxDist)
+        return (;site1,site2,minDist,maxDist,colorRGB)
     end
     bonds = parseline.(spl)
 end
