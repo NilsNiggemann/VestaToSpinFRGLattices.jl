@@ -165,7 +165,7 @@ version = "4.4.2+2"
 
 [[deps.FRGLatticePlotting]]
 deps = ["LaTeXStrings", "Parameters", "Plots", "SpinFRGLattices", "StaticArrays"]
-git-tree-sha1 = "0e8463aaaadbbbb2f179af34a9c39e6dcd49add9"
+path = "../../../FRGLatticePlotting.jl"
 uuid = "0e1bda0b-f6c0-498b-8522-61e6152bcfb4"
 version = "2.0.3"
 
