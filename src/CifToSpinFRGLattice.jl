@@ -89,4 +89,6 @@ module CifToSpinFRGLattice
 
     include("readVesta.jl")
     export getInequivalentSites,getSymmetries
+
+    include("generateSymmetriesFromIrrep.jl")
 end # module SpinLatticeFromCif

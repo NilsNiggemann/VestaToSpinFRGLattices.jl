@@ -59,16 +59,16 @@ end
 
 abstract type AbstractSymop <: Function end
 
-struct SiteTransformation{T<:Real} <: AbstractSymop
+struct FractionalTransformation{T<:Real} <: AbstractSymop
     WMatrix::SMatrix{4,4,T,16}
 end
 
-getOrigin(S::SiteTransformation) = S.WMatrix[1:3,4]
-getRotation(S::SiteTransformation) = S.WMatrix[1:3,1:3]
+getOrigin(S::FractionalTransformation) = S.WMatrix[1:3,4]
+getRotation(S::FractionalTransformation) = S.WMatrix[1:3,1:3]
 
-SiteTransformation(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real = SiteTransformation(convert(SMatrix{4,4,T,16},[matrix origin; 0 0 0 1])) 
+FractionalTransformation(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real = FractionalTransformation(convert(SMatrix{4,4,T,16},[matrix origin; 0 0 0 1])) 
 
-function (S::SiteTransformation)(vec::AbstractVector{T}) where {T<:Real}
+function (S::FractionalTransformation)(vec::AbstractVector{T}) where {T<:Real}
     x,y,z = vec
     x,y,z,_ = S.WMatrix * SA[x,y,z,one(x)]
     return SA[x,y,z]
@@ -76,13 +76,13 @@ end
 
 parseAsSMatrix(v::AbstractVector{<:AbstractString}) = SMatrix{3,3,Float64,9}([parse(Float64,s) for s in v])'
 
-function Base.show(io::IO, x::SiteTransformation{T}) where T
+function Base.show(io::IO, x::FractionalTransformation{T}) where T
     println(io,"3 dim SiteTransformation{",T,"}")
     Base.print_matrix(io,x.WMatrix)
 end
-Base.show(io::IO, ::MIME"text/plain", x::SiteTransformation) = show(io,x)
+Base.show(io::IO, ::MIME"text/plain", x::FractionalTransformation) = show(io,x)
 
-ispuretranslation(S::SiteTransformation) = abs(det(getRotation(S))) == 0
+ispuretranslation(S::FractionalTransformation) = abs(det(getRotation(S))) == 0
 
 """read the symmetry operations from a vesta file"""
 function readVestaSymops(filename)
@@ -90,7 +90,7 @@ function readVestaSymops(filename)
     Info = getFields.(Info)
     origins = [parseAsSVector(data[1:3]) for data in Info]
     matrices = [parseAsSMatrix(data[4:12]) for data in Info]
-    Syms = SiteTransformation.(origins,matrices)
+    Syms = FractionalTransformation.(origins,matrices)
     filter!(!ispuretranslation,Syms)
     return Syms
 end
@@ -142,13 +142,16 @@ end
 """given a filename return the Basis structure"""
 function getBasis(filename::AbstractString)
     a1,a2,a3 = readLatticeVectors(filename)
+    # a1 = SA[1,0,0]
+    # a2 = SA[0,1,0]
+    # a3 = SA[0,0,1]
     T = [a1 a2 a3]
     b,SiteType = getUnitCell(filename)
     
     b = [T*r for r in b]
     
     NUnique = maximum(SiteType)
-    NNdist = min(getMinDistance(b),norm(a1),norm(a2),norm(a3))
+    NNdist = min(getMinDistance(b),norm(a1),norm(a2),norm(a3))# not entirely correct, need to generate more than one unit cell
     refSites_r = [T * r.position for r in readVestaSites(filename)]
     refSitePos = [findfirst(==(r), b) for r in refSites_r]
     refSites = Rvec.(0,0,0,refSitePos)
@@ -167,7 +170,7 @@ function getMinDistance(sites::AbstractVector{<:AbstractVector})
 end
 
 """Returns function acting on Rvec site by transforming and applying cartesian space function """
-function gettransform(T::SiteTransformation,Basis::SpinFRGLattices.Basis_Struct)
+function gettransform(T::FractionalTransformation,Basis::SpinFRGLattices.Basis_Struct)
     @inline transform(r::AbstractArray) = T(r)
     RV(x) = SpinFRGLattices.getRvec(x,Basis)
     @inline transform(R::Rvec) = getCartesian(R,Basis) |> T |> RV
@@ -179,22 +182,39 @@ function getName(filename)
     splitext(basename(filename))[1]
 end
 
-struct SiteTransformationRvec{T,B<:Basis_Struct} <: AbstractSymop
-    T::SiteTransformation{T}
+struct SiteTransformation{T,B<:Basis_Struct} <: AbstractSymop
+    T::FractionalTransformation{T}
     Basis::B
+    # function SiteTransformation(S::FractionalTransformation{Ty},Basis::B) where {Ty,B<:Basis_Struct}
+    #     T = Basis.T
+    #     Tinv = inv(T)
+    #     org = getOrigin(S)
+    #     mat = getRotation(S)
+    #     # s = SiteTransformation(T*org,Tinv*mat*T)
+    #     s = FractionalTransformation(Tinv*org,Tinv*mat*T)
+
+    #     new{Ty,B}(s,Basis)
+    # end
 end
-
+function SiteTransformation_(S::FractionalTransformation{Ty},Basis::B) where {Ty,B<:Basis_Struct}
+    T = Basis.T
+    Tinv = inv(T)
+    org = getOrigin(S)
+    mat = getRotation(S)
+    s = FractionalTransformation(Tinv*org,Tinv*mat*T)
+    return SiteTransformation(s,Basis)
+end
 using SpinFRGLattices:getRvec
-(S::SiteTransformationRvec)(r::AbstractArray) = S.T(r)
-(S::SiteTransformationRvec)(r::Rvec) = getRvec(S.T(getCartesian(r,S.Basis)),S.Basis)
+(S::SiteTransformation)(r::AbstractArray) = S.T(r)
+(S::SiteTransformation)(r::Rvec) = getRvec(S.T(getCartesian(r,S.Basis)),S.Basis)
 
-function Base.show(io::IO, x::SiteTransformationRvec{T,B}) where {T,B}
+function Base.show(io::IO, x::SiteTransformation{T,B}) where {T,B}
     show(io,B)
     print(io," ")
     show(io,x.T)
 end
 
-Base.show(io::IO, ::MIME"text/plain", x::SiteTransformationRvec{T,B}) where {T,B} = show(io,x)
+Base.show(io::IO, ::MIME"text/plain", x::SiteTransformation{T,B}) where {T,B} = show(io,x)
 
 function splitSyms(syms::AbstractVector{T},refSites::AbstractArray) where T <: AbstractSymop
     
@@ -204,7 +224,7 @@ function splitSyms(syms::AbstractVector{T},refSites::AbstractArray) where T <: A
     for sym in syms
         isRefSym = false
         for (i,r) in enumerate(refSites)
-            if sym(r) == r
+            if sym(r) ≈ r
                 isRefSym = true
                 push!(refSyms[i],sym)
             end
@@ -215,12 +235,10 @@ function splitSyms(syms::AbstractVector{T},refSites::AbstractArray) where T <: A
 end
 
 function getSymmetriesVesta(filename::AbstractString, Basis = getBasis(filename)::Basis_Struct)
-    refSites = getCartesian.(Basis.refSites,Ref(Basis))
-    
-    syms = [SiteTransformationRvec(sym,Basis) for sym in readVestaSymops(filename)]
+    refSites = [inv(Basis.T)*getCartesian(r,Basis) for r in Basis.refSites]
+    syms = [SiteTransformation_(sym,Basis) for sym in readVestaSymops(filename)]
     return splitSyms(syms,refSites)
 end
-
 
 function reduceToInequivSites(NCell,nonRefSyms)
     InequivSites = Rvec_3D[]
@@ -239,8 +257,8 @@ function reduceToInequivSites(NCell,nonRefSyms)
 end
 
 import Base.*
-*(S::SiteTransformation,S2::SiteTransformation) = SiteTransformation(S.WMatrix*S2.WMatrix)
-*(S::SiteTransformationRvec,S2::SiteTransformationRvec) = SiteTransformationRvec(S.T*S2.T,S.Basis)
+*(S::FractionalTransformation,S2::FractionalTransformation) = FractionalTransformation(S.WMatrix*S2.WMatrix)
+*(S::SiteTransformation,S2::SiteTransformation) = SiteTransformation(S.T*S2.T,S.Basis)
 
 function readBondsVesta(filename::AbstractString)
     data = readFileInfo(filename,"SBOND",VestaFile())[begin:end-1]
@@ -267,5 +285,5 @@ end
 
 isInUnitCell(R::Rvec_3D) = R.n1 == R.n2 == R.n3 == 0
 
-isidentity(s::SiteTransformation) = s.WMatrix == I
-isidentity(s::SiteTransformationRvec) = s.T.WMatrix == I
+isidentity(s::FractionalTransformation) = s.WMatrix == I
+isidentity(s::SiteTransformation) = s.T.WMatrix == I
