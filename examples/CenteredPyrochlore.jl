@@ -1,6 +1,7 @@
 import CifToSpinFRGLattice as Cif
 using FRGLatticePlotting,Plotly
 using SpinFRGLattices
+import SpinFRGLattices as SL
 using FRGLatticePlotting.Plots
 using SpinFRGLattices.StaticArrays
 Plots.plotly()
@@ -82,27 +83,31 @@ end
 addSyms = let 
     refsitesFrac = [Basis.T*getCartesian(r,Basis) for r in Basis.refSites]
     traf(org,rot) = Cif.fractionaltransformation_origin(org,rot)
+
     xmirror = float(SA[-1 0 0;0 1 0;0 0 1])
     ymirror = float(SA[1 0 0;0 -1 0;0 0 1])
     xyrotation = float(SA[0 -1 0;1 0 0;0 0 1])
+    xymirror = float(SA[0 1 0; 1 0 0;0 0 1])
+
     inversion = float(SA[-1 0 0;0 -1 0;0 0 -1])
 
-    Cif.FractionalTransformation(Basis.T * Basis.b[Basis.refSites[2].b],SA[-1 0. 0;0 -1 0;0 0 -1])
+    site1trafos = (xmirror,ymirror,xyrotation,xymirror)
 
-    Site2inversion = traf(refsitesFrac[2],inversion)
 
-    println(refsitesFrac[2])
-    println(traf(refsitesFrac[2],xmirror)(refsitesFrac[2]))
+    site2trafos = (xmirror,ymirror)
+    # site3trafos = (xymirror,)
+    site3trafos = []
 
-    [Site2inversion,traf(refsitesFrac[1],xmirror), traf(refsitesFrac[1],ymirror),traf(refsitesFrac[1],xyrotation)]
-    # [traf(refsitesFrac[1],xmirror), traf(refsitesFrac[1],ymirror)]
+    trafs = (site1trafos,site2trafos,site3trafos)
+    
+    syms = [traf(refsitesFrac[x],y) for x in eachindex(refsitesFrac) for y in trafs[x] ]
     
 end
 CPyro = Cif.generateSystem(2,"../test/na6cu7bio4po44cl3_onlyCu.vesta",method = generateLayer;addSyms)
 println(CPyro.PairList|> length)
 ##
-allpairs = generateLayer(2,Basis,Basis.refSites[1])
-plotSystem2(CPyro,Basis;refSite = 2,allpairs,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
+allpairs = generateLayer(1,Basis,Basis.refSites[1])
+plotSystem2(CPyro,Basis;refSite = 1,allpairs,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
 zlims!(-20,30)
 # pairsPlot(CPyro.PairList,Basis)
 ##
