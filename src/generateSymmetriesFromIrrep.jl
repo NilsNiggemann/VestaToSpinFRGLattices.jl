@@ -1,22 +1,21 @@
-function generateSymms(irreps;digits = 14)
+function generateSymms(irreps;digits = 14,maxiter = 1000)
     syms = Set(irreps)
     roundsyms = Set(irreps) # rounded version to avoid duplicates
 
     iteration = 0
     for s1 in syms
         for s2 in syms
-            iteration += 1
-            if iteration > 1000
+            if iteration > maxiter
                 @warn "Too many iterations"
                 return collect(syms)
             end
-            # iteration >1000 && error("Too many iterations")
             Snew = s1*s2
-
+            
             isInUnitCell(getTranslation(Snew)) || continue
-
+            
             roundSnew = round(Snew; digits)
             if roundSnew ∉ roundsyms
+                iteration += 1
                 push!(syms,Snew)
                 push!(roundsyms,roundSnew)
             end

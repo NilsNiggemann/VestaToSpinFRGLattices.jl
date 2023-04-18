@@ -29,49 +29,6 @@ end
 # plotDistBonds!(sites,Basis,minDist = Bonds[2].minDist, maxDist = Bonds[2].maxDist,lw = 10,color = :black)
 current()
 ##
-"""Plot all sites and inequivalent pairs"""
-function plotSystem2(System,Basis;
-    plotAll = true,
-    refSite = nothing,
-    markersize = 5,
-    inequivColor = "green",
-    inequivalpha = 0.5,
-    plotBonds=true,
-    plotCouplings=true,
-    CouplingColors = nothing,
-    bondlw = 7,
-    Bonds = [(minDist = Basis.NNdist-1e-3,maxDist = Basis.NNdist+1e-3,colorRGB = [0,0,0])],
-    allpairs = unique!(SpinFRGLattices.sortedPairList(System.NLen,Basis)[1]),
-    kwargs...)
-    (;PairList,OnsitePairs )= System
-    
-    indices = copy(OnsitePairs)
-    push!(indices,length(PairList)) # get final index
-    if refSite === nothing 
-        plotpairs = unique(PairList)
-    else
-        # allpairs = unique!(generatePairSites(System.NLen,Basis,Basis.refSites[refSite]))
-        plotpairs = PairList[indices[refSite]:indices[refSite+1]]
-    end
-    filter!(x-> x in allpairs,plotpairs)
-
-    plotAll || (allpairs = plotpairs)
-    pl = pairsPlot(allpairs,Basis,markersize = markersize,aspect_ratio=:equal;kwargs...)
-    if plotBonds
-        for b in Bonds
-            plotDistBonds!(allpairs,Basis,minDist = b.minDist, maxDist = b.maxDist,lw = bondlw,color = Plots.Colors.RGB((b.colorRGB./255)...))
-        end
-    end
-    # plotBonds && plotDistBonds!(allpairs,Basis;color = Bondcolor,lw = bondlw, minDist = bondDist-1e-3, maxDist = bondDist+1e-3)
-
-    plotAll && pairsPlot(plotpairs,Basis,pl,color = inequivColor,alpha = inequivalpha,markersize = 2*markersize)
-    
-    plotCouplings && plotCouplings!(System,Basis;refSite = refSite,colors = CouplingColors)
-    return pl
-end
-##
-Basis = Cif.getBasis("../test/na6cu7bio4po44cl3_onlyCu.vesta")
-Bonds = Cif.readBondsVesta("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 
 
 function generateLayer(L,Basis,refsite)
@@ -91,23 +48,30 @@ addSyms = let
 
     inversion = float(SA[-1 0 0;0 -1 0;0 0 -1])
 
-    site1trafos = (xmirror,ymirror,xyrotation,xymirror)
+    site1trafos = (xmirror,ymirror,xyrotation,xymirror,inversion)
+    site1trafos = []
 
-
-    site2trafos = (xmirror,ymirror)
-    # site3trafos = (xymirror,)
+    site2trafos = (inversion)
+    site2trafos = []
+    # site3trafos = (ymirror,)
     site3trafos = []
 
     trafs = (site1trafos,site2trafos,site3trafos)
     
     syms = [traf(refsitesFrac[x],y) for x in eachindex(refsitesFrac) for y in trafs[x] ]
-    
 end
-CPyro = Cif.generateSystem(2,"../test/na6cu7bio4po44cl3_onlyCu.vesta",method = generateLayer;addSyms)
-println(CPyro.PairList|> length)
 ##
+Squag = Cif.generateSystem(1,"../test/na6cu7bio4po44cl3_onlyCu.vesta",method = generateLayer;addSyms)
+println(Squag.PairList|> length)
+##
+Basis = Cif.getBasis("../test/na6cu7bio4po44cl3_onlyCu.vesta")
+Bonds = Cif.readBondsVesta("../test/na6cu7bio4po44cl3_onlyCu.vesta")
+
 allpairs = generateLayer(1,Basis,Basis.refSites[1])
-plotSystem2(CPyro,Basis;refSite = 1,allpairs,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
+plotSystem2(Squag,Basis;refSite = 2,allpairs,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
 zlims!(-20,30)
 # pairsPlot(CPyro.PairList,Basis)
 ##
+CPyro = Cif.generateSystem(4,"../test/CentredPyrochlore.vesta")
+Bonds = Cif.readBondsVesta("../test/CentredPyrochlore.vesta")
+plotSystem(CPyro,Basis;refSite = 2,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
