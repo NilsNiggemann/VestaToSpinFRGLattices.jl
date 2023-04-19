@@ -1,4 +1,5 @@
 [deps]
+CifToSpinFRGLattice = "680434bc-4f64-4098-b23a-394725495aff"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 SpinFRGLattices = "053fb7f8-31b7-4f68-aef8-4452b415dd8c"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"

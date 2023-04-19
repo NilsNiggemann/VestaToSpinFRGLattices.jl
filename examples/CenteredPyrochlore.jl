@@ -68,10 +68,11 @@ Basis = Cif.getBasis("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 Bonds = Cif.readBondsVesta("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 
 allpairs = generateLayer(1,Basis,Basis.refSites[1])
-plotSystem2(Squag,Basis;refSite = 2,allpairs,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
+plotSystem(Squag,Basis;refSite = 2,allpairs,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
 zlims!(-20,30)
 # pairsPlot(CPyro.PairList,Basis)
 ##
+Basis = Cif.getBasis("../test/CentredPyrochlore.vesta")
 CPyro = Cif.generateSystem(4,"../test/CentredPyrochlore.vesta")
 Bonds = Cif.readBondsVesta("../test/CentredPyrochlore.vesta")
-plotSystem(CPyro,Basis;refSite = 2,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
+plotSystem(CPyro,Basis;refSite = 1,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
