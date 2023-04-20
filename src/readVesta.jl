@@ -64,9 +64,17 @@ struct FractionalTransformation{T<:Real} <: AbstractSymop
 end
 
 getTranslation(S::FractionalTransformation) = S.WMatrix[1:3,4]
-getRotation(S::FractionalTransformation) = S.WMatrix[1:3,1:3]
+getRotation(S::FractionalTransformation) = SMatrix{3,3}(S.WMatrix[1:3,1:3])
 
-FractionalTransformation(translation::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real = FractionalTransformation(convert(SMatrix{4,4,T,16},[matrix translation; 0 0 0 1])) 
+
+FractionalTransformation(t::SVector{3,T},W::SMatrix{3,3,T,9}) where T <: Real = FractionalTransformation(SA[
+    W[1,1] W[1,2] W[1,3] t[1];
+    W[2,1] W[2,2] W[2,3] t[2];
+    W[3,1] W[3,2] W[3,3] t[3];
+    0 0 0 1
+    ]
+) 
+
 
 """given an origin and a transformation matrix, returns a FractionalTransformation"""
 function fractionaltransformation_origin(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real
@@ -189,8 +197,8 @@ function getName(filename)
     splitext(basename(filename))[1]
 end
 
-struct SiteTransformation{T,B<:Basis_Struct} <: AbstractSymop
-    T::FractionalTransformation{T}
+struct SiteTransformation{Ty,B<:Basis_Struct} <: AbstractSymop
+    T::FractionalTransformation{Ty}
     Basis::B
 end
 
@@ -287,26 +295,33 @@ end
 function generateSystem(NLen,filename;addSyms = nothing,kwargs...)
     Name = getName(filename)
     Basis = getBasis(filename)
-    syms = readVestaSymops(filename)
-    if addSyms !== nothing
-        append!(syms,addSyms)
-    end
 
-    (;refSyms,nonRefSyms) = generateSiteSyms(syms,Basis)
+    (;refSyms,nonRefSyms) = generateVestaSymOps(filename,addSyms;Basis)
     System = getLatticeGeometry(NLen,Name,Basis,nonRefSyms,refSyms;kwargs...)
     return System
 end
 
-function test(filename,addSyms=nothing)
-    Basis = getBasis(filename)
+function generateVestaSymOps(filename::AbstractString,addSyms=nothing; Basis = getBasis(filename))
     syms = readVestaSymops(filename)
+
     if addSyms !== nothing
         append!(syms,addSyms)
     end
-    # syms = generateSymms(syms)
-    (;refSyms,nonRefSyms) = generateSiteSyms(syms,Basis)
+    return generateSiteSyms(syms,Basis)
+        
 end
+
 isInUnitCell(R::Rvec_3D) = R.n1 == R.n2 == R.n3 == 0
 
 isidentity(s::FractionalTransformation) = s.WMatrix == I
 isidentity(s::SiteTransformation) = s.T.WMatrix == I
+
+import SpinFRGLattices.generateReducedLattice
+
+function generateReducedLattice(NLen,filename,addSyms=nothing,kwargs...)
+    Basis = getBasis(filename)
+    (;refSyms,nonRefSyms) = generateVestaSymOps(filename,addSyms;Basis)
+
+    return generateReducedLattice(NLen,Basis,nonRefSyms,refSyms;kwargs...)
+
+end

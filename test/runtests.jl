@@ -150,12 +150,7 @@ a = Cif.generateSystem(12,"SimpleCubic.vesta",test = true)
     @test length(a.PairList) == length(b.PairList)
 end
 ##
-a = Cif.generateSystem(6,"CentredPyrochlore.vesta",test = true)
+# a = Cif.generateSystem(14,"CentredPyrochlore.vesta",test = false)
 ##
 a = Cif.generateSystem(7,"CentredPyrochlore.vesta",test = true)
 ##
-@time a = Cif.generateSystem(20,"CentredPyrochlore.vesta")
-##
-@profview a = Cif.generateSystem(18,"SimpleCubic.vesta")
-##
-@time a = SimpleCubic.getCubic(18)

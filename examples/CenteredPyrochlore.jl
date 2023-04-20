@@ -73,6 +73,7 @@ zlims!(-20,30)
 # pairsPlot(CPyro.PairList,Basis)
 ##
 Basis = Cif.getBasis("../test/CentredPyrochlore.vesta")
-CPyro = Cif.generateSystem(4,"../test/CentredPyrochlore.vesta")
+CPyro = Cif.generateSystem(5,"../test/CentredPyrochlore.vesta")
+##
 Bonds = Cif.readBondsVesta("../test/CentredPyrochlore.vesta")
-plotSystem(CPyro,Basis;refSite = 1,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
+plotSystem(CPyro,Basis;refSite = 1,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = (3,1))
