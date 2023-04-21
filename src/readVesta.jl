@@ -157,9 +157,6 @@ end
 """given a filename return the Basis structure"""
 function getBasis(filename::AbstractString)
     a1,a2,a3 = readLatticeVectors(filename)
-    # a1 = SA[1,0,0]
-    # a2 = SA[0,1,0]
-    # a3 = SA[0,0,1]
     T = [a1 a2 a3]
     b,SiteType = getUnitCell(filename)
     

@@ -20,13 +20,9 @@ pairsPlot(sites, Basis)
 
 Bonds = Cif.readBondsVesta("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 
-# sites1 = filter(s-> getSiteType(s,Basis) == 1,sites)
-# sites2 = filter(s-> getSiteType(s,Basis) == 2,sites)
 for b in Bonds
     plotDistBonds!(sites,Basis,minDist = b.minDist, maxDist = b.maxDist,lw = 10,color = Plots.Colors.RGB((b.colorRGB./255)...))
 end
-# plotDistBonds!(sites,Basis, minDist = Bonds[1].minDist, maxDist = Bonds[1].maxDist,lw = 10,color = :darkred)
-# plotDistBonds!(sites,Basis,minDist = Bonds[2].minDist, maxDist = Bonds[2].maxDist,lw = 10,color = :black)
 current()
 ##
 
