@@ -1,6 +1,6 @@
 module CifToSpinFRGLattice
     
-    using StaticArrays
+    using StaticArrays,HDF5
 
     abstract type CrystallographicFile end
     struct CifFile <:CrystallographicFile end
@@ -91,4 +91,5 @@ module CifToSpinFRGLattice
     export getInequivalentSites,getSymmetries
 
     include("generateSymmetriesFromIrrep.jl")
+    include("IO.jl")
 end # module SpinLatticeFromCif

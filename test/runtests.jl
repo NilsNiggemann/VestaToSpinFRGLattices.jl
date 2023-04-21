@@ -126,7 +126,7 @@ end
     @test isempty(uniqueSites)
 end
 ##
-using SpinFRGLattices
+using CifToSpinFRGLattice.SpinFRGLattices
 @testset "transforms" begin
     
     syms = Cif.readVestaSymops("SimpleCubic.vesta")
@@ -143,14 +143,18 @@ using SpinFRGLattices
     @test T2(R2) == Rvec(2,-2,3,1)
 end
 ##
-a = Cif.generateSystem(12,"SimpleCubic.vesta",test = true)
+a = Cif.generateSystem(7,"SimpleCubic.vesta",test = true)
 ##
 @testset "Read Cubic" begin
-    b = SimpleCubic.getCubic(12)
+    b = SimpleCubic.getCubic(7)
     @test length(a.PairList) == length(b.PairList)
 end
+a= Cif.generateSystem(7,"CentredPyrochlore.vesta",test = true)
 ##
-# a = Cif.generateSystem(14,"CentredPyrochlore.vesta",test = false)
-##
-a = Cif.generateSystem(7,"CentredPyrochlore.vesta",test = true)
-##
+@testset "PairDict IO" begin
+    file = tempname()
+    a = Cif.generateReducedLattice(6,"CentredPyrochlore.vesta").pairNumberDict
+    Cif.h5writeReducedLattice(file,"/test",a)
+    b = Cif.h5readPairNumberDict(file,"/test")
+    @test a == b
+end

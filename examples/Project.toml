@@ -1,5 +1,6 @@
 [deps]
 CifToSpinFRGLattice = "680434bc-4f64-4098-b23a-394725495aff"
 FRGLatticePlotting = "0e1bda0b-f6c0-498b-8522-61e6152bcfb4"
+HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 Plotly = "58dd65bb-95f3-509e-9936-c39a10fdeae7"
 SpinFRGLattices = "053fb7f8-31b7-4f68-aef8-4452b415dd8c"
