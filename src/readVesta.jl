@@ -46,7 +46,7 @@ function getLatticeVectors(a, b, c, alpha, beta, gamma)
 end
 
 """reads position of symmetry inequivalent sites in fractional coordinates"""
-function readVestaSites(filename)
+function readUniqueSites(filename)
     Info = readFileInfo(filename,"STRUC",VestaFile())[1:2:end-1] # skip standard uncertainty lines and line of trailing zeros
     function parseSites(s)
         number,atom,label,occ,x,y,z,_ = getFields(s)
@@ -100,7 +100,7 @@ Base.show(io::IO, ::MIME"text/plain", x::FractionalTransformation) = show(io,x)
 ispuretranslation(S::FractionalTransformation) = abs(det(getRotation(S))) == 0
 
 """read the symmetry operations from a vesta file"""
-function readVestaSymops(filename)
+function readSymops(filename)
     Info = readFileInfo(filename,"SYMOP",VestaFile())
     Info = getFields.(Info)
     origins = [parseAsSVector(data[1:3]) for data in Info]
@@ -150,8 +150,8 @@ function getUnitCell(sites::AbstractVector{<:AbstractVector},symops::AbstractVec
 end
 
 function getUnitCell(filename::AbstractString)
-    sites = getproperty.(readVestaSites(filename),:position)
-    symops = readVestaSymops(filename)
+    sites = getproperty.(readUniqueSites(filename),:position)
+    symops = readSymops(filename)
     getUnitCell(sites,symops)
 end
 """given a filename return the Basis structure"""
@@ -167,7 +167,7 @@ function getBasis(filename::AbstractString)
     
     NUnique = maximum(SiteType)
     NNdist = min(getMinDistance(b),norm(a1),norm(a2),norm(a3))# not entirely correct, need to generate more than one unit cell
-    refSites_r = [T * r.position for r in readVestaSites(filename)]
+    refSites_r = [T * r.position for r in readUniqueSites(filename)]
     refSitePos = [findfirst(==(r), b) for r in refSites_r]
     refSites = Rvec.(0,0,0,refSitePos)
     return Basis_Struct_3D(;a1,a2,a3,b,NUnique,SiteType,NNdist,refSites)
@@ -182,14 +182,6 @@ function getMinDistance(sites::AbstractVector{<:AbstractVector})
         end
     end
     return minDist
-end
-
-"""Returns function acting on Rvec site by transforming and applying cartesian space function """
-function gettransform(T::FractionalTransformation,Basis::SpinFRGLattices.Basis_Struct)
-    @inline transform(r::AbstractArray) = T(r)
-    RV(x) = SpinFRGLattices.getRvec(x,Basis)
-    @inline transform(R::Rvec) = getCartesian(R,Basis) |> T |> RV
-    return transform
 end
 
 """return the name of a file without the extension"""
@@ -241,11 +233,11 @@ function splitSyms(syms::AbstractVector{T},refSites::AbstractArray) where T <: A
     return (;refSyms,nonRefSyms)
 end
 
-getTranslation(S::CifToSpinFRGLattice.SiteTransformation{Float64, Basis_Struct_3D}) = getTranslation(S.T)
+getTranslation(S::SiteTransformation{Float64, Basis_Struct_3D}) = getTranslation(S.T)
 
-function getSymmetriesVesta(filename::AbstractString, Basis = getBasis(filename)::Basis_Struct)
+function getSymmetries(filename::AbstractString, Basis = getBasis(filename)::Basis_Struct)
     refSites = [getCartesian(r,Basis) for r in Basis.refSites]
-    syms = [siteTransformation(sym,Basis) for sym in readVestaSymops(filename)]
+    syms = [siteTransformation(sym,Basis) for sym in readSymops(filename)]
     return splitSyms(syms,refSites)
 end
 
@@ -269,7 +261,7 @@ import Base.*
 *(S::FractionalTransformation,S2::FractionalTransformation) = FractionalTransformation(S.WMatrix*S2.WMatrix)
 *(S::SiteTransformation,S2::SiteTransformation) = SiteTransformation(S.T*S2.T,S.Basis)
 
-function readBondsVesta(filename::AbstractString)
+function readBonds(filename::AbstractString)
     data = readFileInfo(filename,"SBOND",VestaFile())[begin:end-1]
     spl = getFields.(data)
     function parseline(s)
@@ -296,13 +288,13 @@ function generateSystem(NLen,filename;addSyms = nothing,kwargs...)
     Name = getName(filename)
     Basis = getBasis(filename)
 
-    (;refSyms,nonRefSyms) = generateVestaSymOps(filename,addSyms;Basis)
+    (;refSyms,nonRefSyms) = generateSymmetries(filename,addSyms;Basis)
     System = getLatticeGeometry(NLen,Name,Basis,nonRefSyms,refSyms;kwargs...)
     return System
 end
 
-function generateVestaSymOps(filename::AbstractString,addSyms=nothing; Basis = getBasis(filename))
-    syms = readVestaSymops(filename)
+function generateSymmetries(filename::AbstractString,addSyms=nothing; Basis = getBasis(filename))
+    syms = readSymops(filename)
 
     if addSyms !== nothing
         append!(syms,addSyms)
@@ -320,7 +312,7 @@ import SpinFRGLattices.generateReducedLattice
 
 function generateReducedLattice(NLen,filename,addSyms=nothing,kwargs...)
     Basis = getBasis(filename)
-    (;refSyms,nonRefSyms) = generateVestaSymOps(filename,addSyms;Basis)
+    (;refSyms,nonRefSyms) = generateSymmetries(filename,addSyms;Basis)
 
     return generateReducedLattice(NLen,Basis,nonRefSyms,refSyms;kwargs...)
 

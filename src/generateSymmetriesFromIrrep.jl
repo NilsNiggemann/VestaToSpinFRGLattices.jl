@@ -35,14 +35,3 @@ function translate_back_to_UC(s::FractionalTransformation)
     org = org - floor.(org)
     return FractionalTransformation(org,rot)
 end
-
-function testIrrs()
-    transl = float(SA[0,0,0])
-    xmirr = FractionalTransformation(transl,float(SA[-1 0 0; 0 1 0; 0 0 1]) )
-    ymirr = FractionalTransformation(transl,float(SA[1 0 0; 0 -1 0; 0 0 1]) )
-    zmirr = FractionalTransformation(transl,float(SA[1 0 0; 0 1 0; 0 0 -1]) )
-    xyRot = FractionalTransformation(transl,float(SA[0 -1 0; 1 0 0; 0 0 1]) )
-    xzRot = FractionalTransformation(transl,float(SA[0 0 -1; 0 1 0; 1 0 0]) )
-    yzRot = FractionalTransformation(transl,float(SA[1 0 0; 0 0 -1; 0 1 0]) )
-    return [xmirr,ymirr,zmirr,xyRot,xzRot,yzRot]
-end
