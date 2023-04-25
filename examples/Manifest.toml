@@ -2,7 +2,7 @@
 
 julia_version = "1.9.0-rc2"
 manifest_format = "2.0"
-project_hash = "8297dd875c48ddc437f3f123ac86f6269e7468ce"
+project_hash = "976983a167c83ca08a0afbe4f917c82583c85f8c"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -53,12 +53,6 @@ deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jl
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
-
-[[deps.CifToSpinFRGLattice]]
-deps = ["LinearAlgebra", "SpinFRGLattices", "StaticArrays"]
-path = ".."
-uuid = "680434bc-4f64-4098-b23a-394725495aff"
-version = "0.1.0"
 
 [[deps.ColorSchemes]]
 deps = ["ColorTypes", "ColorVectorSpace", "Colors", "FixedPointNumbers", "Random", "SnoopPrecompile"]
@@ -875,6 +869,12 @@ version = "0.4.1"
 git-tree-sha1 = "ca0969166a028236229f63514992fc073799bb78"
 uuid = "41fe7b60-77ed-43a1-b4f0-825fd5a5650d"
 version = "0.2.0"
+
+[[deps.VestaToSpinFRGLattices]]
+deps = ["HDF5", "LinearAlgebra", "SpinFRGLattices", "StaticArrays"]
+path = ".."
+uuid = "680434bc-4f64-4098-b23a-394725495aff"
+version = "0.1.0"
 
 [[deps.Wayland_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]

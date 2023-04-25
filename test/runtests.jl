@@ -124,10 +124,20 @@ end
 
 Vesta.generateSystem(7,"CentredPyrochlore.vesta",test = true)
 ##
-@testset "PairDict IO" begin
+@testset "reduced Geometry IO" begin
     file = tempname()
-    a = Vesta.generateReducedLattice(6,"CentredPyrochlore.vesta").pairNumberDict
-    Vesta.h5writeReducedLattice(file,"/test",a)
-    b = Vesta.h5readPairNumberDict(file,"/test")
-    @test a == b
+    a = Vesta.generateReducedLattice(6,"CentredPyrochlore.vesta")
+    Vesta.h5saveReducedLattice(file,a)
+    b = Vesta.h5readPairNumberDict(file)
+
+    @testset "pairNumberDict" begin
+        @test a.pairNumberDict == b
+    end
+    @testset "Basis" begin
+        Basis = Vesta.h5readBasis(file)
+        for f in fieldnames(Basis_Struct_3D)
+            @test getfield(Basis,f) == getfield(a.Basis,f)
+        end
+
+    end
 end

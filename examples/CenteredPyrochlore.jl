@@ -1,4 +1,5 @@
-import CifToSpinFRGLattice as Cif
+import VestaToSpinFRGLattices as Vesta
+using VestaToSpinFRGLattices
 using FRGLatticePlotting,Plotly
 using SpinFRGLattices
 import SpinFRGLattices as SL
@@ -12,13 +13,13 @@ function isInBox(s::Rvec,Basis::Basis_Struct,L)
     return 0 <= x <= L*a1 && 0 <= y <= L*a2 && 0 <= z <= L*a3
 end
 ##
-Basis = Cif.getBasis("../test/na6cu7bio4po44cl3_onlyCu.vesta")
+Basis = Vesta.getBasis("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 # sites = generatePairSites(4,Basis)
 sites = generateLUnitCells(1,Basis)
 filter!(s-> isInBox(s,Basis,2),sites)
 pairsPlot(sites, Basis)
 
-Bonds = Cif.readBondsVesta("../test/na6cu7bio4po44cl3_onlyCu.vesta")
+Bonds = Vesta.readBonds("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 
 for b in Bonds
     plotDistBonds!(sites,Basis,minDist = b.minDist, maxDist = b.maxDist,lw = 10,color = Plots.Colors.RGB((b.colorRGB./255)...))
@@ -35,7 +36,7 @@ end
 ##
 addSyms = let 
     refsitesFrac = [Basis.T*getCartesian(r,Basis) for r in Basis.refSites]
-    traf(org,rot) = Cif.fractionaltransformation_origin(org,rot)
+    traf(org,rot) = Vesta.fractionaltransformation_origin(org,rot)
 
     xmirror = float(SA[-1 0 0;0 1 0;0 0 1])
     ymirror = float(SA[1 0 0;0 -1 0;0 0 1])
@@ -57,19 +58,20 @@ addSyms = let
     syms = [traf(refsitesFrac[x],y) for x in eachindex(refsitesFrac) for y in trafs[x] ]
 end
 ##
-Squag = Cif.generateSystem(1,"../test/na6cu7bio4po44cl3_onlyCu.vesta",method = generateLayer;addSyms)
+Squag = Vesta.generateSystem(1,"../test/na6cu7bio4po44cl3_onlyCu.vesta",method = generateLayer;addSyms)
 println(Squag.PairList|> length)
 ##
-Basis = Cif.getBasis("../test/na6cu7bio4po44cl3_onlyCu.vesta")
-Bonds = Cif.readBondsVesta("../test/na6cu7bio4po44cl3_onlyCu.vesta")
+Basis = Vesta.getBasis("../test/na6cu7bio4po44cl3_onlyCu.vesta")
+Bonds = Vesta.readBonds("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 
 allpairs = generateLayer(1,Basis,Basis.refSites[1])
 plotSystem(Squag,Basis;refSite = 2,allpairs,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
 zlims!(-20,30)
 # pairsPlot(CPyro.PairList,Basis)
 ##
-Basis = Cif.getBasis("../test/CentredPyrochlore.vesta")
-CPyro = Cif.generateSystem(5,"../test/CentredPyrochlore.vesta")
+Basis = getBasis("../test/CentredPyrochlore.vesta")
+CPyro = generateSystem(14,"../test/CentredPyrochlore.vesta")
+setNeighborCouplings!(CPyro,[5,2.],Basis)
 ##
-Bonds = Cif.readBondsVesta("../test/CentredPyrochlore.vesta")
-plotSystem(CPyro,Basis;refSite = 1,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = (3,1))
+Bonds = Vesta.readBonds("../test/CentredPyrochlore.vesta")
+plotSystem(CPyro,Basis;refSite = 1,bondDist = Basis.NNdist,markersize = 3,Bonds,plotAll = true,plotCouplings = true,bondlw = (3,1))

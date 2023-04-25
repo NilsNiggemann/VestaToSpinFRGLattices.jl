@@ -1,6 +1,6 @@
 module VestaToSpinFRGLattices
     
-    using StaticArrays,HDF5
+    using StaticArrays,HDF5,H5Zblosc,HDF5Helpers
 
     abstract type CrystallographicFile end
     struct VestaFile <:CrystallographicFile end
@@ -55,5 +55,5 @@ module VestaToSpinFRGLattices
     include("generateSymmetriesFromIrrep.jl")
     include("IO.jl")
 
-    export getBasis,generateReducedLattice,generateSymmetries,readBonds,generateSystem
+    export getBasis,generateReducedLattice,generateSymmetries,readBonds,generateSystem,h5saveReducedLattice,h5readPairNumberDict,h5readReducedLattice
 end # module SpinLatticeFromCif
