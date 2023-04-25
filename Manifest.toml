@@ -234,7 +234,9 @@ uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[deps.SpinFRGLattices]]
 deps = ["StaticArrays", "StructArrays", "Test"]
-path = "../../SpinFRGLattices.jl"
+git-tree-sha1 = "6c85d0e65774d2ba22cff42bdb1290fe31a4def2"
+repo-rev = "dev"
+repo-url = "git@gitlabph.physik.fu-berlin.de:julia-frg/SpinFRGLattices.jl.git"
 uuid = "053fb7f8-31b7-4f68-aef8-4452b415dd8c"
 version = "0.5.0"
 
