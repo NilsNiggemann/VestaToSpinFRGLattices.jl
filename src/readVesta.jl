@@ -282,7 +282,7 @@ end
 
 """does not work for for lattices with more than one inequiv site yet, since the ref Symmetries need to be considered for each inequiv ref site individually"""
 function generateSystem(NLen,filename;addSyms = nothing,kwargs...)
-    Name = getName(filename)*"NLen=$(NLen)"
+    Name = getName(filename)*"_NLen=$(NLen)"
     Basis = getBasis(filename)
 
     (;refSyms,nonRefSyms) = generateSymmetries(filename,addSyms;Basis)
