@@ -5,10 +5,12 @@ The data layout includes a list of all sites appearing in pairNumbersDict and a 
 function h5saveReducedLattice(filename::AbstractString,reducedLattice,key = standardKey())
     pairNumberDict = reducedLattice.pairNumberDict
     R1,R2,pairNumber = SpinFRGLattices.convertDictToArrays(pairNumberDict)
-    AllSites = unique(R1)
-    getPNumber(pair) = pair in keys(pairNumberDict) ? pairNumberDict[pair] : 0
+    AllSites = unique(R2)
 
-    allPairNumbers = [getPNumber((R1,R2)) for R1 in AllSites, R2 in AllSites]
+    UC = SpinFRGLattices.getUnitCell(reducedLattice.Basis)
+    sort!(UC,by = x -> x.b)
+
+    allPairNumbers = [pairNumberDict[(R1,R2)] for R1 in UC, R2 in AllSites]
     
     h5saveRvecs(filename,key*"/AllSites",AllSites)
     h5open(filename,"cw") do file
@@ -88,13 +90,17 @@ end
 function h5readPairNumberDict(filename::AbstractString,key::AbstractString = standardKey())
     fields = h5read(filename,key)
     AllSites = h5readRvecs(filename,key*"/AllSites")
+    # UC = SpinFRGLattices.getUnitCell(Basis)
+    UC = filter(isInUnitCell,AllSites)
+    sort!(UC,by = x -> x.b)
+
     pairNumber = fields["pairNumbers"]
     
-    iterations = Iterators.product(AllSites,AllSites)
+    iterations = Iterators.product(UC,AllSites)
 
     D = Dict(R1R2 => Int(pairNumber[i]) for (i,R1R2) in enumerate(iterations))
     filter!(x->x.second != 0,D)
-    return D
+    return PairNumbersDict(D)
 end
 
 function h5readReducedLattice(filename::AbstractString,key::AbstractString = standardKey())
