@@ -3,9 +3,9 @@ using VestaToSpinFRGLattices
 using FRGLatticePlotting,Plotly
 using SpinFRGLattices
 import SpinFRGLattices as SL
-using FRGLatticePlotting.Plots
 using SpinFRGLattices.StaticArrays
-Plots.plotly()
+using FRGLatticePlotting.Makie.Colors
+using FRGLatticePlotting.Makie
 ##
 function isInBox(s::Rvec,Basis::Basis_Struct,L)
     x,y,z = getCartesian(s,Basis)
@@ -22,9 +22,9 @@ pairsPlot(sites, Basis)
 Bonds = Vesta.readBonds("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 
 for b in Bonds
-    plotDistBonds!(sites,Basis,minDist = b.minDist, maxDist = b.maxDist,lw = 10,color = Plots.Colors.RGB((b.colorRGB./255)...))
+    plotDistBonds!(sites,Basis,minDist = b.minDist, maxDist = b.maxDist,lw = 10,color = Colors.RGB((b.colorRGB./255)...))
 end
-current()
+current_figure()
 ##
 
 
@@ -65,8 +65,14 @@ Basis = Vesta.getBasis("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 Bonds = Vesta.readBonds("../test/na6cu7bio4po44cl3_onlyCu.vesta")
 
 allpairs = generateLayer(1,Basis,Basis.refSites[1])
-plotSystem(Squag,Basis;refSite = 2,allpairs,bondDist = Basis.NNdist,Bonds,markersize = 3,plotAll = true,bondlw = 1)
-zlims!(-20,30)
+fig,ax = FRGLatticePlotting.getStandardFigure(Rvec_3D;
+xlabelvisible = false,xticklabelsvisible = false,xticksvisible = false,xspinesvisible = false,xgridvisible = false,
+ylabelvisible = false,yticklabelsvisible = false,yticksvisible = false,yspinesvisible = false,ygridvisible = false,
+zlabelvisible = false,zticklabelsvisible = false,zticksvisible = false,zspinesvisible = false,zgridvisible = false,
+)
+FRGLatticePlotting.plotSystem!(ax,Squag,Basis;refSite = 1,allpairs,bondDist = Basis.NNdist,Bonds,markersize = 20,plotAll = true,bondlw = 2,inequivScale = 2.0)
+zlims!(ax,-10,20)
+fig
 # pairsPlot(CPyro.PairList,Basis)
 ##
 Basis = getBasis("../test/CentredPyrochlore.vesta")
