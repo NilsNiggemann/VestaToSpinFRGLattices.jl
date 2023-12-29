@@ -75,6 +75,11 @@ FractionalTransformation(t::SVector{3,T},W::SMatrix{3,3,T,9}) where T <: Real = 
     ]
 ) 
 
+import Base.*
+*(S::FractionalTransformation,S2::FractionalTransformation) = FractionalTransformation(S.WMatrix*S2.WMatrix)
+
+import Base.^
+^(S::FractionalTransformation,i::Number) = FractionalTransformation(S.WMatrix^i)
 
 """given an origin and a transformation matrix, returns a FractionalTransformation"""
 function fractionaltransformation_origin(origin::AbstractVector{T},matrix::AbstractMatrix{T}) where T <: Real
@@ -111,8 +116,8 @@ function readSymops(filename)
 end
 
 """for a position in fractional coordinates return true if it is in the unit cell"""
-function isInUnitCell(pos_fractional::AbstractVector)
-    all(pos_fractional .>= -0) && all(pos_fractional .< 1)
+function isInUnitCell(pos_fractional::AbstractVector,lower=0,upper=1)
+    all(pos_fractional .>= lower) && all(pos_fractional .< upper)
 end
 
 translate_back_to_UC(r::AbstractVector) = r .- floor.(r)
@@ -190,6 +195,12 @@ struct SiteTransformation{Ty,B<:Basis_Struct} <: AbstractSymop
     T::FractionalTransformation{Ty}
     Basis::B
 end
+
+import Base.*
+*(S::SiteTransformation,S2::SiteTransformation) = SiteTransformation(S.T*S2.T,S.Basis)
+
+import Base.^
+^(S::SiteTransformation,i::Number) = SiteTransformation(S.T^i,S.Basis)
 
 """returns a SiteTransformation accounting for the correct coordinates of the basis"""
 function siteTransformation(S::FractionalTransformation{Ty},Basis::B) where {Ty,B<:Basis_Struct}

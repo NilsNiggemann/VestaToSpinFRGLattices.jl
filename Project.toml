@@ -1,7 +1,7 @@
 name = "VestaToSpinFRGLattices"
 uuid = "680434bc-4f64-4098-b23a-394725495aff"
 authors = ["Nils Niggemann <nils.niggemann@fu-berlin.de>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 H5Zblosc = "c8ec2601-a99c-407f-b158-e79c03c2f5f7"
