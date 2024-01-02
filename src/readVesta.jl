@@ -265,9 +265,6 @@ function reduceToInequivSites(NCell,nonRefSyms)
     return InequivSites
 end
 
-import Base.*
-*(S::SiteTransformation,S2::SiteTransformation) = SiteTransformation(S.T*S2.T,S.Basis)
-
 function readBonds(filename::AbstractString)
     data = readFileInfo(filename,"SBOND",VestaFile())[begin:end-1]
     spl = getFields.(data)
