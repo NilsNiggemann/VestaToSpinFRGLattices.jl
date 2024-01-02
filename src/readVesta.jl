@@ -266,7 +266,6 @@ function reduceToInequivSites(NCell,nonRefSyms)
 end
 
 import Base.*
-*(S::FractionalTransformation,S2::FractionalTransformation) = FractionalTransformation(S.WMatrix*S2.WMatrix)
 *(S::SiteTransformation,S2::SiteTransformation) = SiteTransformation(S.T*S2.T,S.Basis)
 
 function readBonds(filename::AbstractString)
